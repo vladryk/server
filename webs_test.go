@@ -13,7 +13,7 @@ import (
 )
 
 const (
-	requestNumber = 100
+	requestNumber = 10
 	url = "http://127.0.0.1:8000/analyze"
 	testStr = " hello http://info.cern.ch/hypertext/WWW/TheProject.html"
 	testOutput = `{"links":[{"title":"The World Wide Web project","url":"http://info.cern.ch/hypertext/WWW/TheProject.html"}]}`
@@ -21,9 +21,11 @@ const (
 
 func TestMain(m *testing.M) {
 	// Run server
-	getServer()
-	
-	//os.Exit(m.Run())
+	go func() {
+		serv := getServer()
+		log.Fatal(serv.ListenAndServe())
+	}()
+	os.Exit(m.Run())
 }
 
 func TestTest(t *testing.T)  {

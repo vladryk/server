@@ -8,6 +8,7 @@ import ("io"
 	"regexp"
 	"strings"
 	"encoding/json"
+	"github.com/gorilla/mux"
 )
 
 func notFoundHandler(w http.ResponseWriter, r *http.Request) {
@@ -62,7 +63,6 @@ func analyzeHandler(w http.ResponseWriter, r *http.Request)  {
 		if strings.HasSuffix(el, "."){  // FIXME: We need use list of symbols
 			el = el[:len(el)-1]
 		}
-		fmt.Println(el, ch)
 
 		go getTitle(el, ch)
 	}
@@ -76,12 +76,18 @@ func analyzeHandler(w http.ResponseWriter, r *http.Request)  {
 	 w.Write(jsonString)
 }
 
-func getServer() {
-	http.HandleFunc("/", notFoundHandler)
-	http.HandleFunc("/analyze", analyzeHandler)
-	http.ListenAndServe(":8000", nil)
+func getServer() *http.Server{
+	r := mux.NewRouter()
+	r.HandleFunc("/", notFoundHandler)
+	r.HandleFunc("/analyze", analyzeHandler)
+	srv := &http.Server{
+		Handler:      r,
+		Addr:         "127.0.0.1:8000",
+    	}
+	return srv
 }
 
 func main()  {
-	getServer()
+	serv := getServer()
+	log.Fatal(serv.ListenAndServe())
 }
