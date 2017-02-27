@@ -1,25 +1,26 @@
-package main
+package webserver
 
-import ("io"
-	"net/http"
+import (
+	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"log"
-	"fmt"
+	"net/http"
 	"regexp"
 	"strings"
-	"encoding/json"
+
 	"github.com/gorilla/mux"
 )
 
 func notFoundHandler(w http.ResponseWriter, r *http.Request) {
-	io.WriteString(w, "Page not found\n")
+	w.Write([]byte("Page not found\n"))
 }
 
-func getTitle(url string, ch chan<-map[string]string) {
+func getTitle(url string, ch chan<- map[string]string) {
 	urlTitle := make(map[string]string)
 	var (
 		resp *http.Response
-		err error
+		err  error
 	)
 
 	resp, err = http.Get(url)
@@ -27,31 +28,28 @@ func getTitle(url string, ch chan<-map[string]string) {
 		fmt.Printf("Page not found %s", url)
 	}
 	defer resp.Body.Close()
+
 	body, err := ioutil.ReadAll(resp.Body)
-	reg := regexp.MustCompile(`<TITLE>(?s)(.*)</TITLE>`)
+	if err != nil {
+		fmt.Printf("Can't read body: %s", err)
+	}
+	reg := regexp.MustCompile(`<(?:(?i)title>)(?P<title>.*)(?:</(?i)title>)`)
+	match := reg.FindStringSubmatch(string(body))
 
-	matches := reg.FindString(string(body))
-
-
-
-	matches = strings.Replace(matches, "<TITLE>", "", 1) // FIXME need to use re groups
-	matches = strings.Replace(matches, "</TITLE>", "", 1)
-
-	if len(matches) == 0 {
+	if len(match) == 0 {
 		fmt.Printf("Tried to parse %s, got empty match\n\n", string(body))
 	}
 
-
 	urlTitle["url"] = url
-	urlTitle["title"] = matches
+	urlTitle["title"] = match[1]
 	ch <- urlTitle
 }
 
-func analyzeHandler(w http.ResponseWriter, r *http.Request)  {
+func analyzeHandler(w http.ResponseWriter, r *http.Request) {
 
 	body, err := ioutil.ReadAll(r.Body)
 	if err != nil {
-    		log.Fatal(err)
+		log.Fatal(err)
 	}
 	reg := regexp.MustCompile(`(https?://[^\s]+)`)
 	matches := reg.FindAllString(string(body), -1)
@@ -60,34 +58,33 @@ func analyzeHandler(w http.ResponseWriter, r *http.Request)  {
 	ch := make(chan map[string]string, len(matches))
 
 	for _, el := range matches {
-		if strings.HasSuffix(el, "."){  // FIXME: We need use list of symbols
-			el = el[:len(el)-1]
+		for _, suf := range []string{".", ",", "?", ";"} {
+			if strings.HasSuffix(el, suf) {
+				el = el[:len(el)-1]
+			}
 		}
-
 		go getTitle(el, ch)
 	}
 
-	for range matches{
-		data := <- ch
+	for range matches {
+		data := <-ch
 		mainDict["links"] = append(mainDict["links"], data)
 	}
 
 	jsonString, err := json.Marshal(mainDict)
-	 w.Write(jsonString)
+	if err != nil {
+		log.Fatal(err)
+	}
+	w.Write(jsonString)
 }
 
-func getServer() *http.Server{
+func GetServer(addr string) *http.Server {
 	r := mux.NewRouter()
 	r.HandleFunc("/", notFoundHandler)
 	r.HandleFunc("/analyze", analyzeHandler)
 	srv := &http.Server{
-		Handler:      r,
-		Addr:         "127.0.0.1:8000",
-    	}
+		Handler: r,
+		Addr:    addr,
+	}
 	return srv
-}
-
-func main()  {
-	serv := getServer()
-	log.Fatal(serv.ListenAndServe())
 }
