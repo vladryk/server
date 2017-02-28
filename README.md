@@ -27,10 +27,12 @@ Response:
 
 # Run:
 ```
-./webserver
+docker-compose up
 ```
+Server will be available on http://127.0.0.1:8001/
+
 
 # Testing:
 ```
-go test
+docker exec -it [container_id] go test ./src/github.com/vladryk/server/server
 ```

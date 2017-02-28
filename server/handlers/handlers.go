@@ -1,18 +1,16 @@
-package webserver
+package handlers
 
 import (
-	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"log"
-	"net/http"
 	"regexp"
 	"strings"
-
-	"github.com/gorilla/mux"
+	"encoding/json"
+	"net/http"
 )
 
-func notFoundHandler(w http.ResponseWriter, r *http.Request) {
+func NotFoundHandler(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte("Page not found\n"))
 }
 
@@ -45,7 +43,7 @@ func getTitle(url string, ch chan<- map[string]string) {
 	ch <- urlTitle
 }
 
-func analyzeHandler(w http.ResponseWriter, r *http.Request) {
+func AnalyzeHandler(w http.ResponseWriter, r *http.Request) {
 
 	body, err := ioutil.ReadAll(r.Body)
 	if err != nil {
@@ -76,15 +74,4 @@ func analyzeHandler(w http.ResponseWriter, r *http.Request) {
 		log.Fatal(err)
 	}
 	w.Write(jsonString)
-}
-
-func GetServer(addr string) *http.Server {
-	r := mux.NewRouter()
-	r.HandleFunc("/", notFoundHandler)
-	r.HandleFunc("/analyze", analyzeHandler)
-	srv := &http.Server{
-		Handler: r,
-		Addr:    addr,
-	}
-	return srv
 }

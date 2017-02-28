@@ -1,0 +1,7 @@
+app:
+  image: golang:1.8
+  ports:
+  - "8001:8000"
+  volumes:
+    - ./:/go/src/github.com/vladryk/server
+  command: /bin/bash -c "cd /go/src/github.com/vladryk/server; go get ...; go run main.go"

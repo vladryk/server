@@ -14,10 +14,10 @@ import (
 
 const (
 	requestNumber = 100
-	url           = "http://127.0.0.1:8000/analyze"
+	url           = "http://127.0.0.1:8002/analyze"
 	testStr       = " hello http://info.cern.ch/hypertext/WWW/TheProject.html"
 	testOutput    = `{"links":[{"title":"The World Wide Web project","url":"http://info.cern.ch/hypertext/WWW/TheProject.html"}]}`
-	serverAddr    = "127.0.0.1:8000"
+	serverAddr    = "127.0.0.1:8002"
 )
 
 func TestMain(m *testing.M) {

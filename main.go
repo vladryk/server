@@ -2,10 +2,10 @@ package main
 
 import (
 	"log"
-	"github.com/vladryk/webserver/webserver"
+	"github.com/vladryk/server/server"
 )
 
 func main() {
-	serv := webserver.GetServer("127.0.0.1:8000")
+	serv := webserver.GetServer("0.0.0.0:8000")
 	log.Fatal(serv.ListenAndServe())
 }
